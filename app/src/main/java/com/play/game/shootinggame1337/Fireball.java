@@ -1,0 +1,29 @@
+package com.play.game.shootinggame1337;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+public class Fireball {
+    public Bitmap fireballImage;
+    public float fireballX, fireballY, fireballVector;
+
+    public Fireball(Context context) {
+        fireballImage = BitmapFactory.decodeResource(context.getResources(), R.drawable.missile);
+
+        this.fireballX = GameView.displayWidth / 2 - this.getFireballWidth() / 2;
+        this.fireballX = GameView.displayHeight - Hunter.hunterHeight - this.getFireballHeight() / 2;
+
+        this.fireballVector = 50;
+    }
+
+    private int getFireballHeight() {
+
+        return this.fireballImage.getWidth();
+    }
+
+    private int getFireballWidth() {
+
+        return this.fireballImage.getHeight();
+    }
+}
