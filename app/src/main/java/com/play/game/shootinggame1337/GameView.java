@@ -1,10 +1,16 @@
 package com.play.game.shootinggame1337;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
+import android.media.AudioAttributes;
 import android.media.SoundPool;
+import android.view.Display;
 import android.view.View;
 import java.util.ArrayList;
 
@@ -57,14 +63,61 @@ public class GameView extends View {
         fireballs = new ArrayList<Fireball>();
         ghosts = new ArrayList<Ghost>();
         hunter = new Hunter(this.context);
+//        todo: add plater movement
 //        leftArrow = new Arrow(this.context, false);
 //        rightArrow = new Arrow(this.context, true);
+
+        for (int ghostCounter =0; ghostCounter < 3; ghostCounter++) {
+
+            Ghost ghost = new Ghost(this.context);
+            ghosts.add(ghost);
+
+            Bat bat = new Bat(this.context);
+            bats.add(bat);
+        }
+
+        configureScore();
+
+//        todo: work on health functionality
+//        configureHealth();
     }
 
+    private void configureScore() {
+
+        this.scorePaint = new Paint();
+        this.scorePaint.setTextSize(TEXT_SIZE);
+        this.scorePaint.setTextAlign(Paint.Align.LEFT);
+        this.scorePaint.setColor(Color.argb(255,255, 185, 0));
+    }
+
+
     private void createSoundObjects() {
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .build();
+
+        this.soundPool = new SoundPool.Builder()
+                .setMaxStreams(3)
+                .setAudioAttributes(audioAttributes)
+                .build();
+
+        this.shootSound = soundPool.load(this.context, R.raw.fire, 1);
+        this.scoreSound = soundPool.load(this.context, R.raw.point, 1);
     }
 
     private void stretchBackGroundImage() {
+        background = BitmapFactory.decodeResource(getResources(), R.drawable.cemetary_bg);
+
+        Display display = ((Activity) getContext()).getWindowManager().getDefaultDisplay();
+
+        Point outSize = new Point();
+
+        display.getSize(outSize);
+
+        displayWidth = outSize.x;
+        displayHeight = outSize.y;
+
     }
 
 }
