@@ -12,18 +12,18 @@ public class Fireball {
         fireballImage = BitmapFactory.decodeResource(context.getResources(), R.drawable.missile);
 
         this.fireballX = GameView.displayWidth / 2 - this.getFireballWidth() / 2;
-        this.fireballX = GameView.displayHeight - Hunter.hunterHeight - this.getFireballHeight() / 2;
+        this.fireballY = GameView.displayHeight - 275 - this.getFireballHeight() / 2;
 
         this.fireballVector = 50;
     }
 
-    private int getFireballHeight() {
-
-        return this.fireballImage.getWidth();
-    }
-
-    private int getFireballWidth() {
+    public int getFireballHeight() {
 
         return this.fireballImage.getHeight();
+    }
+
+    public int getFireballWidth() {
+
+        return this.fireballImage.getWidth();
     }
 }
