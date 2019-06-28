@@ -140,28 +140,31 @@ public class GameView extends View {
         int action = event.getAction();
 
         if (action == MotionEvent.ACTION_DOWN) {
-            Log.i("ontTouchEvent", "is tapped downward.");
+            Log.i("onTouchEvent", "is tapped downward.");
 
+            Log.i("onTouchEvent", "touch X: " + touchX + ". touch Y: " + touchY+
+                    ".  The display height is " + displayHeight + ".  The hunter position is at " +
+                    (displayHeight - 100)+".  ");
 
-        }
+            if (touchX >= (displayWidth / 2 - hunter.hunterWidth / 2) &&
+                    touchX <= (displayWidth / 2 + hunter.hunterWidth / 2) &&
+                    touchY <= (displayHeight - 100)) {
 
-        if (touchX >= (displayWidth / 2 - hunter.hunterWidth / 2) &&
-                touchX <= (displayWidth / 2 + hunter.hunterWidth / 2) &&
-                touchY <+ (displayHeight - 350)) {
-
-            Log.i("Hunter", "is tapped downward. touchX: " + touchX + ". touchY: " + touchY);
+                Log.i("Hunter", "is tapped downward. touchX: " + touchX + ". touchY: " + touchY);
 
 //            todo: create ammo loot to pick up
 
-            if (this.fireballs.size() < 3) {
-                Fireball fireball = new Fireball(context);
-                fireballs.add(fireball);
+                if (this.fireballs.size() < 3) {
+                    Fireball fireball = new Fireball(context);
+                    fireballs.add(fireball);
 
-                if (shootSound !=0) {
-                    this.soundPool.play(shootSound, 1, 1, 0, 0, 1);
+                    if (shootSound !=0) {
+                        this.soundPool.play(shootSound, 1, 1, 0, 0, 1);
 
+                    }
                 }
             }
+
         }
 
         return true;
