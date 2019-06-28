@@ -311,10 +311,17 @@ public class GameView extends View {
 
         drawBats(canvas);
 
-//        todo: add score
-//        drawScore(canvas);
+        drawScore(canvas);
 
 
+    }
+
+    private void drawScore(Canvas canvas) {
+        Log.i("drawScore", "Updating player score" + this.batScore + this.ghostScore);
+
+        this.totalScore = ((this.batScore * 2) + this.ghostScore);
+
+        canvas.drawText("Score: " + totalScore, 0, TEXT_SIZE, this.scorePaint);
     }
 
     private boolean isBatCollision(int fireballCounter, int batIndex) {
