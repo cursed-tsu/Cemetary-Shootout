@@ -16,10 +16,11 @@ import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
+
 import java.util.ArrayList;
 
 public class GameView extends View {
-    private static final float TEXT_SIZE= 60;
+    private static final float TEXT_SIZE = 60;
     public static int displayWidth;
     public static int displayHeight;
     final long UPDATE_MILLISECONDS = 120;
@@ -63,7 +64,7 @@ public class GameView extends View {
 
         rectangle = new Rect(0, 0, displayWidth, displayHeight);
 
-        runnable = (Runnable) ()->{
+        runnable = (Runnable) () -> {
             invalidate();
         };
     }
@@ -78,7 +79,7 @@ public class GameView extends View {
 //        leftArrow = new Arrow(this.context, false);
 //        rightArrow = new Arrow(this.context, true);
 
-        for (int ghostCounter =0; ghostCounter < 3; ghostCounter++) {
+        for (int ghostCounter = 0; ghostCounter < 3; ghostCounter++) {
 
             Ghost ghost = new Ghost(this.context);
             ghosts.add(ghost);
@@ -98,7 +99,7 @@ public class GameView extends View {
         this.scorePaint = new Paint();
         this.scorePaint.setTextSize(TEXT_SIZE);
         this.scorePaint.setTextAlign(Paint.Align.LEFT);
-        this.scorePaint.setColor(Color.argb(255,255, 185, 0));
+        this.scorePaint.setColor(Color.argb(255, 255, 185, 0));
     }
 
 
@@ -142,9 +143,9 @@ public class GameView extends View {
         if (action == MotionEvent.ACTION_DOWN) {
             Log.i("onTouchEvent", "is tapped downward.");
 
-            Log.i("onTouchEvent", "touch X: " + touchX + ". touch Y: " + touchY+
+            Log.i("onTouchEvent", "touch X: " + touchX + ". touch Y: " + touchY +
                     ".  The display height is " + displayHeight + ".  The hunter position is at " +
-                    (displayHeight - 100)+".  ");
+                    (displayHeight - 100) + ".  ");
 
             if (touchX >= (displayWidth / 2 - hunter.hunterWidth / 2) &&
                     touchX <= (displayWidth / 2 + hunter.hunterWidth / 2) &&
@@ -158,7 +159,7 @@ public class GameView extends View {
                     Fireball fireball = new Fireball(context);
                     fireballs.add(fireball);
 
-                    if (shootSound !=0) {
+                    if (shootSound != 0) {
                         this.soundPool.play(shootSound, 1, 1, 0, 0, 1);
 
                     }
@@ -184,16 +185,21 @@ public class GameView extends View {
 
     private void drawObjects(Canvas canvas) {
 
-        for(int fireballCounter = 0; fireballCounter < fireballs.size(); fireballCounter++) {
+        for (int fireballCounter = 0; fireballCounter < fireballs.size(); fireballCounter++) {
             if (fireballs.get(fireballCounter).fireballY > -fireballs.get(fireballCounter).getFireballHeight()) {
                 fireballs.get(fireballCounter).fireballY -= fireballs.get(fireballCounter).fireballVector;
 
                 canvas.drawBitmap(fireballs.get(fireballCounter).fireballImage, fireballs.get(fireballCounter).fireballX, fireballs.get(fireballCounter).fireballY, null);
 
-                if (fireballs.get(fireballCounter).fireballX >= ghosts.get(0).ghostX &&
-                        (fireballs.get(fireballCounter).fireballX + fireballs.get(fireballCounter).getFireballWidth()) <= (ghosts.get(0).ghostX + ghosts.get(0).getWidth()) &&
-                        fireballs.get(fireballCounter).fireballY >= ghosts.get(0).ghostY &&
-                        fireballs.get(fireballCounter).fireballY <= (ghosts.get(0).ghostY + ghosts.get(0).getHeight())) {
+                Log.i("drawObjects", "fireball X: " + fireballs.get(fireballCounter).fireballX + ".  fireball Y: " +
+                        fireballs.get(fireballCounter).fireballY + ".  ghost Y: " + ghosts.get(0).ghostY +
+                        " ghost height: " + ghosts.get(0).getHeight());
+
+                if (isGhostCollision(fireballCounter, 0)) {
+
+                    Log.i("drawObjects", "Explosion!! fireball X: " + fireballs.get(fireballCounter).fireballX + ".  fireball Y: " +
+                            fireballs.get(fireballCounter).fireballY + ".  ghost Y: " + ghosts.get(0).ghostY +
+                            " ghost height: " + ghosts.get(0).getHeight());
 
                     doExplosionForGhosts(context, ghosts, explosions, 0);
 
@@ -206,9 +212,93 @@ public class GameView extends View {
                     this.playScoreSound();
 
 
+                } else if (isGhostCollision(fireballCounter, 1)) {
+
+                    Log.i("drawObjects", "Explosion!! fireball X: " + fireballs.get(fireballCounter).fireballX + ".  fireball Y: " +
+                            fireballs.get(fireballCounter).fireballY + ".  ghost Y: " + ghosts.get(1).ghostY +
+                            " ghost height: " + ghosts.get(1).getHeight());
+
+                    doExplosionForGhosts(context, ghosts, explosions, 1);
+
+                    ghosts.get(1).resetPosition();
+
+                    ghostScore++;
+
+                    fireballs.remove(fireballCounter);
+
+                    this.playScoreSound();
+
+
+                } else if (isGhostCollision(fireballCounter, 2)) {
+
+                    Log.i("drawObjects", "Explosion!! fireball X: " + fireballs.get(fireballCounter).fireballX + ".  fireball Y: " +
+                            fireballs.get(fireballCounter).fireballY + ".  ghost Y: " + ghosts.get(2).ghostY +
+                            " ghost height: " + ghosts.get(2).getHeight());
+
+                    doExplosionForGhosts(context, ghosts, explosions, 2);
+
+                    ghosts.get(2).resetPosition();
+
+                    ghostScore++;
+
+                    fireballs.remove(fireballCounter);
+
+                    this.playScoreSound();
+
+
+                } else if (isBatCollision(fireballCounter, 0)) {
+
+                    Log.i("drawObjects", "Explosion!! fireball X: " + fireballs.get(fireballCounter).fireballX + ".  fireball Y: " +
+                            fireballs.get(fireballCounter).fireballY + ".  bat Y: " + bats.get(0).batY +
+                            " bat height: " + bats.get(0).getHeight());
+
+                    doExplosionForBats(context, bats, explosions, 0);
+
+                    bats.get(0).resetPosition();
+
+                    batScore++;
+
+                    fireballs.remove(fireballCounter);
+
+                    this.playScoreSound();
+
+
+                } else if (isBatCollision(fireballCounter, 1)) {
+
+                    Log.i("drawObjects", "Explosion!! fireball X: " + fireballs.get(fireballCounter).fireballX + ".  fireball Y: " +
+                            fireballs.get(fireballCounter).fireballY + ".  bat Y: " + bats.get(1).batY +
+                            " bat height: " + bats.get(1).getHeight());
+
+                    doExplosionForBats(context, bats, explosions, 1);
+
+                    bats.get(1).resetPosition();
+
+                    batScore++;
+
+                    fireballs.remove(fireballCounter);
+
+                    this.playScoreSound();
+
+
+                } else if (isBatCollision(fireballCounter, 2)) {
+
+                    Log.i("drawObjects", "Explosion!! fireball X: " + fireballs.get(fireballCounter).fireballX + ".  fireball Y: " +
+                            fireballs.get(fireballCounter).fireballY + ".  bat Y: " + bats.get(2).batY +
+                            " bat height: " + bats.get(2).getHeight());
+
+                    doExplosionForBats(context, bats, explosions, 2);
+
+                    bats.get(2).resetPosition();
+
+                    batScore++;
+
+                    fireballs.remove(fireballCounter);
+
+                    this.playScoreSound();
+
+
                 }
-            }
-            else{
+            } else {
                 fireballs.remove(fireballCounter);
             }
         }
@@ -225,7 +315,20 @@ public class GameView extends View {
 //        drawScore(canvas);
 
 
+    }
 
+    private boolean isBatCollision(int fireballCounter, int batIndex) {
+        return fireballs.get(fireballCounter).fireballX >= bats.get(batIndex).batX &&
+                (fireballs.get(fireballCounter).fireballX + fireballs.get(fireballCounter).getFireballWidth()) <= (bats.get(batIndex).batX + bats.get(batIndex).getWidth()) &&
+                fireballs.get(fireballCounter).fireballY >= bats.get(batIndex).batY &&
+                fireballs.get(fireballCounter).fireballY <= (bats.get(batIndex).batY + bats.get(batIndex).getHeight());
+    }
+
+    private boolean isGhostCollision(int fireballCounter, int ghostIndex) {
+        return fireballs.get(fireballCounter).fireballX >= ghosts.get(ghostIndex).ghostX &&
+                (fireballs.get(fireballCounter).fireballX + fireballs.get(fireballCounter).getFireballWidth()) <= (ghosts.get(ghostIndex).ghostX + ghosts.get(ghostIndex).getWidth()) &&
+                fireballs.get(fireballCounter).fireballY >= ghosts.get(ghostIndex).ghostY &&
+                fireballs.get(fireballCounter).fireballY <= (ghosts.get(ghostIndex).ghostY + ghosts.get(ghostIndex).getHeight());
     }
 
     private static void doExplosionForGhosts(Context context, ArrayList<Ghost> ghosts, ArrayList<Explosion> explosions, int mobIndex) {
@@ -240,24 +343,23 @@ public class GameView extends View {
 
     }
 
-    private static void doExplosionForBats(int mobIndex, Context context, ArrayList<Bat> bats,
-                                           ArrayList<Explosion> explosions)
-    {
+    private static void doExplosionForBats(Context context, ArrayList<Bat> bats,
+                                           ArrayList<Explosion> explosions, int mobIndex) {
         Explosion explosion = new Explosion(context);
 
-        explosion.explosionX = bats.get(1).batX + bats.get(mobIndex).getWidth() / 2 -
+        explosion.explosionX = bats.get(mobIndex).batX + bats.get(mobIndex).getWidth() / 2 -
                 explosion.getExplosionWidth() / 2;
 
-        explosion.explosionY = bats.get(1).batY + bats.get(mobIndex).getHeight() / 2 -
+        explosion.explosionY = bats.get(mobIndex).batY + bats.get(mobIndex).getHeight() / 2 -
                 explosion.getExplosionHeight() / 2;
 
         explosions.add(explosion);
     }
 
-    private void drawExplosions(Canvas canvas)
-    {
-        for (int explosionCounter = 0; explosionCounter < explosions.size(); explosionCounter++)
-        {
+    private void drawExplosions(Canvas canvas) {
+        for (int explosionCounter = 0; explosionCounter < explosions.size(); explosionCounter++) {
+            Log.i("drawExplosions", "We have an explosion");
+
             canvas.drawBitmap(explosions.get(explosionCounter).getExplosion(explosions
                             .get(explosionCounter).explosionFrameNumber),
                     explosions.get(explosionCounter).explosionX, explosions
@@ -266,23 +368,19 @@ public class GameView extends View {
             explosions.get(explosionCounter).explosionFrameNumber++;
 
             // there are only 9 images
-            if (explosions.get(explosionCounter).explosionFrameNumber > 8)
-            {
+            if (explosions.get(explosionCounter).explosionFrameNumber > 8) {
                 explosions.remove(explosionCounter);
             }
         }
     }
 
-    private void playScoreSound()
-    {
-        if (scoreSound != 0)
-        {
+    private void playScoreSound() {
+        if (scoreSound != 0) {
             this.soundPool.play(scoreSound, 1, 1, 0, 0, 1);
         }
     }
 
-    private void drawDirectionArrows(Canvas canvas)
-    {
+    private void drawDirectionArrows(Canvas canvas) {
 //        canvas.drawBitmap(leftArrow.getBitmap(), (displayWidth / 4 - leftArrow.getWidth() / 2),
 //                displayHeight - leftArrow.getHeight(), null);
 //
@@ -302,8 +400,7 @@ public class GameView extends View {
      * displayHeight: 1794
      * hunterHeight: 525
      */
-    private void drawHunter(Canvas canvas)
-    {
+    private void drawHunter(Canvas canvas) {
 //        Log.i("drawHunter", "screen display height: " + displayHeight + ".  hunter height: " +
 //                hunter.hunterHeight);
 
@@ -312,17 +409,14 @@ public class GameView extends View {
                 displayHeight - 300, null);
     }
 
-    private void drawBats(Canvas canvas)
-    {
-        for (int batCounter = 0; batCounter < bats.size(); batCounter++)
-        {
+    private void drawBats(Canvas canvas) {
+        for (int batCounter = 0; batCounter < bats.size(); batCounter++) {
             canvas.drawBitmap(bats.get(batCounter).getBitmap(), bats.get(batCounter).batX,
                     bats.get(batCounter).batY, null);
 
             bats.get(batCounter).batFrameNumber++;
 
-            if (bats.get(batCounter).batFrameNumber > 8)
-            {
+            if (bats.get(batCounter).batFrameNumber > 8) {
                 bats.get(batCounter).batFrameNumber = 0;
             }
 
@@ -332,23 +426,19 @@ public class GameView extends View {
 
 //        when bat goes off the left side of the screen
 //        randomly change position and velocity of "new" bat
-            if (bats.get(batCounter).batX < -bats.get(batCounter).getWidth())
-            {
+            if (bats.get(batCounter).batX < -bats.get(batCounter).getWidth()) {
                 bats.get(batCounter).resetPosition();
             }
         }
     }
 
-    private void drawGhosts(Canvas canvas)
-    {
-        for (int ghostCounter = 0; ghostCounter < ghosts.size(); ghostCounter++)
-        {
+    private void drawGhosts(Canvas canvas) {
+        for (int ghostCounter = 0; ghostCounter < ghosts.size(); ghostCounter++) {
             canvas.drawBitmap(ghosts.get(ghostCounter).getBitmap(), ghosts.get(ghostCounter).ghostX, ghosts.get(ghostCounter).ghostY, null);
 
             ghosts.get(ghostCounter).ghostFrameNumber++;
 
-            if (ghosts.get(ghostCounter).ghostFrameNumber > 11)
-            {
+            if (ghosts.get(ghostCounter).ghostFrameNumber > 11) {
                 ghosts.get(ghostCounter).ghostFrameNumber = 0;
             }
 
@@ -358,8 +448,7 @@ public class GameView extends View {
 
 //        when ghost goes off the left side of the screen
 //        randomly change position and velocity of "new" ghost
-            if (ghosts.get(ghostCounter).ghostX < -ghosts.get(ghostCounter).getWidth())
-            {
+            if (ghosts.get(ghostCounter).ghostX < -ghosts.get(ghostCounter).getWidth()) {
                 ghosts.get(ghostCounter).resetPosition();
             }
         }
