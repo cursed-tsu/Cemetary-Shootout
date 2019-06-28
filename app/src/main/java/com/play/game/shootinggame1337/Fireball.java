@@ -19,7 +19,7 @@ public class Fireball {
 
     public int getFireballHeight() {
 
-        return this.fireballImage.getHeight();
+            return this.fireballImage.getHeight();
     }
 
     public int getFireballWidth() {

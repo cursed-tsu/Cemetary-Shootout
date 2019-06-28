@@ -208,6 +208,9 @@ public class GameView extends View {
 
                 }
             }
+            else{
+                fireballs.remove(fireballCounter);
+            }
         }
 
         drawExplosions(canvas);
