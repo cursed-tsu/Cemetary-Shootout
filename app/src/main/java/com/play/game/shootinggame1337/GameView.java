@@ -1,10 +1,20 @@
 package com.play.game.shootinggame1337;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
+import android.media.AudioAttributes;
 import android.media.SoundPool;
+import android.os.Handler;
+import android.util.Log;
+import android.view.Display;
+import android.view.MotionEvent;
 import android.view.View;
 import java.util.ArrayList;
 
@@ -31,7 +41,7 @@ public class GameView extends View {
     Arrow rightArrow;
     Bitmap background;
     Hunter hunter;
-    Hunter handler;
+    Handler handler;
 
     Rect rectangle;
 
@@ -49,6 +59,13 @@ public class GameView extends View {
 
         createSoundObjects();
 
+        handler = new Handler();
+
+        rectangle = new Rect(0, 0, displayWidth, displayHeight);
+
+        runnable = (Runnable) ()->{
+            invalidate();
+        };
     }
 
     private void createGameObjects() {
@@ -57,14 +74,289 @@ public class GameView extends View {
         fireballs = new ArrayList<Fireball>();
         ghosts = new ArrayList<Ghost>();
         hunter = new Hunter(this.context);
+//        todo: add plater movement
 //        leftArrow = new Arrow(this.context, false);
 //        rightArrow = new Arrow(this.context, true);
+
+        for (int ghostCounter =0; ghostCounter < 3; ghostCounter++) {
+
+            Ghost ghost = new Ghost(this.context);
+            ghosts.add(ghost);
+
+            Bat bat = new Bat(this.context);
+            bats.add(bat);
+        }
+
+        configureScore();
+
+//        todo: work on health functionality
+//        configureHealth();
     }
 
+    private void configureScore() {
+
+        this.scorePaint = new Paint();
+        this.scorePaint.setTextSize(TEXT_SIZE);
+        this.scorePaint.setTextAlign(Paint.Align.LEFT);
+        this.scorePaint.setColor(Color.argb(255,255, 185, 0));
+    }
+
+
     private void createSoundObjects() {
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .build();
+
+        this.soundPool = new SoundPool.Builder()
+                .setMaxStreams(3)
+                .setAudioAttributes(audioAttributes)
+                .build();
+
+        this.shootSound = soundPool.load(this.context, R.raw.fire, 1);
+        this.scoreSound = soundPool.load(this.context, R.raw.point, 1);
     }
 
     private void stretchBackGroundImage() {
+        background = BitmapFactory.decodeResource(getResources(), R.drawable.cemetary_bg);
+
+        Display display = ((Activity) getContext()).getWindowManager().getDefaultDisplay();
+
+        Point outSize = new Point();
+
+        display.getSize(outSize);
+
+        displayWidth = outSize.x;
+        displayHeight = outSize.y;
+
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+
+        float touchX = event.getX();
+        float touchY = event.getY();
+
+        int action = event.getAction();
+
+        if (action == MotionEvent.ACTION_DOWN) {
+            Log.i("ontTouchEvent", "is tapped downward.");
+
+
+        }
+
+        if (touchX >= (displayWidth / 2 - hunter.hunterWidth / 2) &&
+                touchX <= (displayWidth / 2 + hunter.hunterWidth / 2) &&
+                touchY <+ (displayHeight - 350)) {
+
+            Log.i("Hunter", "is tapped downward. touchX: " + touchX + ". touchY: " + touchY);
+
+//            todo: create ammo loot to pick up
+
+            if (this.fireballs.size() < 3) {
+                Fireball fireball = new Fireball(context);
+                fireballs.add(fireball);
+
+                if (shootSound !=0) {
+                    this.soundPool.play(shootSound, 1, 1, 0, 0, 1);
+
+                }
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+
+        canvas.drawBitmap(background, null, rectangle, null);
+
+        drawObjects(canvas);
+
+        handler.postDelayed(runnable, UPDATE_MILLISECONDS);
+
+    }
+
+    private void drawObjects(Canvas canvas) {
+
+        for(int fireballCounter = 0; fireballCounter < fireballs.size(); fireballCounter++) {
+            if (fireballs.get(fireballCounter).fireballY > -fireballs.get(fireballCounter).getFireballHeight()) {
+                fireballs.get(fireballCounter).fireballY -= fireballs.get(fireballCounter).fireballVector;
+
+                canvas.drawBitmap(fireballs.get(fireballCounter).fireballImage, fireballs.get(fireballCounter).fireballX, fireballs.get(fireballCounter).fireballY, null);
+
+                if (fireballs.get(fireballCounter).fireballX >= ghosts.get(0).ghostX &&
+                        (fireballs.get(fireballCounter).fireballX + fireballs.get(fireballCounter).getFireballWidth()) <= (ghosts.get(0).ghostX + ghosts.get(0).getWidth()) &&
+                        fireballs.get(fireballCounter).fireballY >= ghosts.get(0).ghostY &&
+                        fireballs.get(fireballCounter).fireballY <= (ghosts.get(0).ghostY + ghosts.get(0).getHeight())) {
+
+                    doExplosionForGhosts(context, ghosts, explosions, 0);
+
+                    ghosts.get(0).resetPosition();
+
+                    ghostScore++;
+
+                    fireballs.remove(fireballCounter);
+
+                    this.playScoreSound();
+
+
+                }
+            }
+        }
+
+        drawExplosions(canvas);
+
+        drawHunter(canvas);
+
+        drawGhosts(canvas);
+
+        drawBats(canvas);
+
+//        todo: add score
+//        drawScore(canvas);
+
+
+
+    }
+
+    private static void doExplosionForGhosts(Context context, ArrayList<Ghost> ghosts, ArrayList<Explosion> explosions, int mobIndex) {
+
+        Explosion explosion = new Explosion(context);
+
+        explosion.explosionX = ghosts.get(mobIndex).ghostX + ghosts.get(mobIndex).getWidth() / 2 - explosion.getExplosionWidth() / 2;
+
+        explosion.explosionY = ghosts.get(mobIndex).ghostY + ghosts.get(mobIndex).getHeight() / 2 - explosion.getExplosionHeight() / 2;
+
+        explosions.add(explosion);
+
+    }
+
+    private static void doExplosionForBats(int mobIndex, Context context, ArrayList<Bat> bats,
+                                           ArrayList<Explosion> explosions)
+    {
+        Explosion explosion = new Explosion(context);
+
+        explosion.explosionX = bats.get(1).batX + bats.get(mobIndex).getWidth() / 2 -
+                explosion.getExplosionWidth() / 2;
+
+        explosion.explosionY = bats.get(1).batY + bats.get(mobIndex).getHeight() / 2 -
+                explosion.getExplosionHeight() / 2;
+
+        explosions.add(explosion);
+    }
+
+    private void drawExplosions(Canvas canvas)
+    {
+        for (int explosionCounter = 0; explosionCounter < explosions.size(); explosionCounter++)
+        {
+            canvas.drawBitmap(explosions.get(explosionCounter).getExplosion(explosions
+                            .get(explosionCounter).explosionFrameNumber),
+                    explosions.get(explosionCounter).explosionX, explosions
+                            .get(explosionCounter).explosionY, null);
+
+            explosions.get(explosionCounter).explosionFrameNumber++;
+
+            // there are only 9 images
+            if (explosions.get(explosionCounter).explosionFrameNumber > 8)
+            {
+                explosions.remove(explosionCounter);
+            }
+        }
+    }
+
+    private void playScoreSound()
+    {
+        if (scoreSound != 0)
+        {
+            this.soundPool.play(scoreSound, 1, 1, 0, 0, 1);
+        }
+    }
+
+    private void drawDirectionArrows(Canvas canvas)
+    {
+//        canvas.drawBitmap(leftArrow.getBitmap(), (displayWidth / 4 - leftArrow.getWidth() / 2),
+//                displayHeight - leftArrow.getHeight(), null);
+//
+//        canvas.drawBitmap(rightArrow.getBitmap(), ((displayWidth / 4) * 3 - rightArrow.getWidth() / 2),
+//                displayHeight - rightArrow.getHeight(), null);
+    }
+
+    /**
+     * draw the hunter at the bottom of the screen
+     * <p>
+     * Full Screen Needed:
+     * Remember, the canvas is less than the full screen because
+     * it doesn't include the notification bar at the top
+     * Need to implement full screen to avoid items at bottom
+     * getting cut off
+     * <p>
+     * displayHeight: 1794
+     * hunterHeight: 525
+     */
+    private void drawHunter(Canvas canvas)
+    {
+//        Log.i("drawHunter", "screen display height: " + displayHeight + ".  hunter height: " +
+//                hunter.hunterHeight);
+
+        //hunter.hunterHeight
+        canvas.drawBitmap(hunter.getBitmap(), (displayWidth / 2 - hunter.hunterWidth / 2),
+                displayHeight - 300, null);
+    }
+
+    private void drawBats(Canvas canvas)
+    {
+        for (int batCounter = 0; batCounter < bats.size(); batCounter++)
+        {
+            canvas.drawBitmap(bats.get(batCounter).getBitmap(), bats.get(batCounter).batX,
+                    bats.get(batCounter).batY, null);
+
+            bats.get(batCounter).batFrameNumber++;
+
+            if (bats.get(batCounter).batFrameNumber > 8)
+            {
+                bats.get(batCounter).batFrameNumber = 0;
+            }
+
+            // move bat towards the left side of the screen
+            bats.get(batCounter).batX -= bats.get(batCounter).batVelocity;
+
+
+//        when bat goes off the left side of the screen
+//        randomly change position and velocity of "new" bat
+            if (bats.get(batCounter).batX < -bats.get(batCounter).getWidth())
+            {
+                bats.get(batCounter).resetPosition();
+            }
+        }
+    }
+
+    private void drawGhosts(Canvas canvas)
+    {
+        for (int ghostCounter = 0; ghostCounter < ghosts.size(); ghostCounter++)
+        {
+            canvas.drawBitmap(ghosts.get(ghostCounter).getBitmap(), ghosts.get(ghostCounter).ghostX, ghosts.get(ghostCounter).ghostY, null);
+
+            ghosts.get(ghostCounter).ghostFrameNumber++;
+
+            if (ghosts.get(ghostCounter).ghostFrameNumber > 11)
+            {
+                ghosts.get(ghostCounter).ghostFrameNumber = 0;
+            }
+
+            // move ghost towards the left side of the screen
+            ghosts.get(ghostCounter).ghostX -= ghosts.get(ghostCounter).ghostVelocity;
+
+
+//        when ghost goes off the left side of the screen
+//        randomly change position and velocity of "new" ghost
+            if (ghosts.get(ghostCounter).ghostX < -ghosts.get(ghostCounter).getWidth())
+            {
+                ghosts.get(ghostCounter).resetPosition();
+            }
+        }
     }
 
 }
